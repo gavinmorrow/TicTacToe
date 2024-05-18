@@ -108,13 +108,13 @@ askMove b p = do
 ckWin :: Board -> Player -> Bool
 ckWin b p
   | null cs' = False
-  | otherwise = all (ckDim1 getX) cs' && all (ckDim1 getY) cs'
+  | otherwise = (&&) <$> (all . ckDim1) getX <*> (all . ckDim1) getY $ cs'
   where
     cs = filter ((p ==) . pl) $ cells b
     cs' = combinations 3 cs
     ckDim1 d c = allEq ls || arithmeticSeq (sort $ toList ls)
       where
-        ls = fromList $ fmap (d . pos) c
+        ls = fromList $ d . pos <$> c
 
 ckTie :: Board -> Bool
 ckTie = (==) <$> (area . size) <*> (length . cells)
