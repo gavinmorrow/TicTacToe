@@ -3,6 +3,7 @@ module Main where
 import Data.List (intercalate, intersperse, sort, subsequences, uncons)
 import Data.List.NonEmpty (NonEmpty, fromList, head, toList)
 import Data.Maybe (isJust)
+import System.IO (hFlush, stdout)
 import Prelude hiding (head)
 
 main :: IO ()
@@ -71,9 +72,7 @@ askMove b p = do
       putStrLn $ "Player " ++ show p' ++ " won!"
       return b
     else do
-      putStr $ show p ++ ": "
-
-      input <- getLine
+      input <- prompt $ show p ++ ": "
       handleMove $ parse input
   where
     p' = other p
@@ -115,3 +114,10 @@ arithmeticSeq (x : y : z : xs) = (y - x) == (z - y) && arithmeticSeq (y : z : xs
 -- source: https://stackoverflow.com/a/52605612/15920018
 combinations :: Int -> [a] -> [[a]]
 combinations k = filter ((k ==) . length) . subsequences
+
+-- source: https://stackoverflow.com/a/13190872/15920018
+prompt :: String -> IO String
+prompt msg = do
+  putStr msg
+  hFlush stdout
+  getLine
