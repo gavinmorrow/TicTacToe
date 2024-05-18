@@ -1,7 +1,16 @@
+module Main where
+
 import Data.List (intercalate, intersperse, sort, subsequences, uncons)
 import Data.List.NonEmpty (NonEmpty, fromList, head, toList)
 import Data.Maybe (isJust)
 import Prelude hiding (head)
+
+main :: IO ()
+main = do
+  putStrLn "Welcome to Tic-Tac-Toe!"
+  putStrLn "↳ Written in Haskell by Gavin Morrow"
+  _ <- askMove new X
+  return ()
 
 data Player = X | O deriving (Eq, Show)
 
@@ -51,8 +60,6 @@ instance Show Board where
                     Just (Cell O _) -> 'O'
                     Nothing -> '•'
           ]
-
-main = askMove new X
 
 askMove :: Board -> Player -> IO Board
 askMove b p = do
