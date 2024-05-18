@@ -19,14 +19,17 @@ other :: Player -> Player
 other X = O
 other O = X
 
-data Pos = Pos {x :: Int, y :: Int} deriving (Eq)
+data Pos = Pos {getX :: Int, getY :: Int} deriving (Eq)
 
-instance Show Pos where show p = "(" ++ show (x p) ++ ", " ++ show (y p) ++ ")"
+instance Show Pos where show p = "(" ++ show (getX p) ++ ", " ++ show (getY p) ++ ")"
 
-data Size = Size {w :: Int, h :: Int} deriving (Eq)
+data Size = Size {getW :: Int, getH :: Int} deriving (Eq)
+
+area :: Size -> Int
+area = (*) <$> getW <*> getH
 
 inBounds :: Size -> Pos -> Bool
-inBounds s p = x p < w s && y p < h s
+inBounds s p = getX p < getW s && getX p < getH s
 
 data Cell = Cell {pl :: Player, pos :: Pos}
 
@@ -46,23 +49,23 @@ instance Show Board where
     intercalate
       "\n"
       [ line
-        | y <- [0 .. h (size b) - 1],
-          let line = showLine b y
+        | y <- [0 .. getH (size b) - 1],
+          let line = showLine y
       ]
     where
-      showLine :: Board -> Int -> String
-      showLine b y =
+      showLine :: Int -> String
+      showLine y =
         intersperse
           ' '
           [ cell
-            | x <- [0 .. w (size b) - 1],
+            | x <- [0 .. getW (size b) - 1],
               let cell = case get b $ Pos x y of
                     Just (Cell X _) -> 'X'
                     Just (Cell O _) -> 'O'
                     Nothing -> '•'
           ]
 
-askMove :: Board -> Player -> IO Board
+askMove :: Board -> Player -> IO ()
 askMove b p = do
   print b
 
@@ -70,19 +73,30 @@ askMove b p = do
   if ckWin b p'
     then do
       putStrLn $ "Player " ++ show p' ++ " won!"
-      return b
     else do
       input <- prompt $ show p ++ ": "
-      handleMove $ parse input
+      handleInput $ parse input
+      return ()
   where
     p' = other p
 
-    parse :: String -> Pos
-    parse m = Pos x y where [x, y] = map read $ words m
+    parse :: String -> Maybe Pos
+    parse m = case map read $ words m of
+      [] -> Nothing
+      [_] -> Nothing
+      [x, y] -> Just $ Pos x y
+      _ -> Nothing
 
     occupied :: Pos -> Bool
-    occupied pos = isJust $ get b pos
+    occupied pos' = isJust $ get b pos'
 
+    handleInput :: Maybe Pos -> IO ()
+    handleInput (Just i) = handleMove i
+    handleInput Nothing = do
+      putStrLn "Invalid move."
+      askMove b p
+
+    handleMove :: Pos -> IO ()
     handleMove m = do
       if occupied m
         then do
@@ -94,13 +108,16 @@ askMove b p = do
 ckWin :: Board -> Player -> Bool
 ckWin b p
   | null cs' = False
-  | otherwise = all (ckDim1 x) cs' && all (ckDim1 y) cs'
+  | otherwise = all (ckDim1 getX) cs' && all (ckDim1 getY) cs'
   where
     cs = filter ((p ==) . pl) $ cells b
     cs' = combinations 3 cs
     ckDim1 d c = allEq ls || arithmeticSeq (sort $ toList ls)
       where
         ls = fromList $ fmap (d . pos) c
+
+ckTie :: Board -> Bool
+ckTie = (==) <$> (area . size) <*> (length . cells)
 
 allEq :: (Eq a) => NonEmpty a -> Bool
 allEq l = all (== head l) l
