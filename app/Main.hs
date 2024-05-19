@@ -71,8 +71,7 @@ askMove b p = do
 
   -- checks win on the next iteration, otherwise the board isn't updated
   if ckWin b p'
-    then do
-      putStrLn $ "Player " ++ show p' ++ " won!"
+    then putStrLn $ "Player " ++ show p' ++ " won!"
     else do
       input <- prompt $ show p ++ ": "
       handleInput $ parse input
@@ -97,7 +96,7 @@ askMove b p = do
       askMove b p
 
     handleMove :: Pos -> IO ()
-    handleMove m = do
+    handleMove m =
       if occupied m
         then do
           putStrLn $ "Sorry, " ++ show m ++ " is already occupied."
@@ -108,16 +107,20 @@ askMove b p = do
 ckWin :: Board -> Player -> Bool
 ckWin b p
   | null cs' = False
-  | otherwise = (&&) <$> (all . ckDim1) getX <*> (all . ckDim1) getY $ cs'
+  | otherwise = (&&) <$> ckX <*> ckY $ cs'
   where
     cs = filter ((p ==) . pl) $ cells b
     cs' = combinations 3 cs
+
     ckDim1 d c = allEq ls || arithmeticSeq (sort $ toList ls)
       where
         ls = fromList $ d . pos <$> c
+    ckAllDim1 = all . ckDim1
+    ckX = ckAllDim1 getX
+    ckY = ckAllDim1 getY
 
 ckTie :: Board -> Bool
-ckTie = (==) <$> (area . size) <*> (length . cells)
+ckTie = (==) <$> area . size <*> length . cells
 
 allEq :: (Eq a) => NonEmpty a -> Bool
 allEq l = all (== head l) l
@@ -126,7 +129,7 @@ arithmeticSeq :: [Int] -> Bool
 arithmeticSeq [] = True
 arithmeticSeq [_] = True
 arithmeticSeq [_, _] = True
-arithmeticSeq (x : y : z : xs) = (y - x) == (z - y) && arithmeticSeq (y : z : xs)
+arithmeticSeq (x : y : z : xs) = y - x == z - y && arithmeticSeq (y : z : xs)
 
 -- source: https://stackoverflow.com/a/52605612/15920018
 combinations :: Int -> [a] -> [[a]]
