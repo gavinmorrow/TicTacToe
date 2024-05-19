@@ -1,3 +1,5 @@
+{-# LANGUAGE MultiWayIf #-}
+
 module Main where
 
 import Data.List (intercalate, intersperse, sort, subsequences, uncons)
@@ -69,13 +71,14 @@ askMove :: Board -> Player -> IO ()
 askMove b p = do
   print b
 
-  -- checks win on the next iteration, otherwise the board isn't updated
-  if ckWin b p'
-    then putStrLn $ "Player " ++ show p' ++ " won!"
-    else do
-      input <- prompt $ show p ++ ": "
-      handleInput $ parse input
-      return ()
+  -- checks on the next iteration, otherwise the board isn't updated
+  if
+    | ckWin b p' -> putStrLn $ "Player " ++ show p' ++ " won!"
+    | ckTie b -> putStrLn "There was a tie!"
+    | otherwise -> do
+        input <- prompt $ show p ++ ": "
+        handleInput $ parse input
+        return ()
   where
     p' = other p
 
