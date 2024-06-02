@@ -6,6 +6,7 @@ import Data.List (intercalate, intersperse, sort, subsequences, uncons)
 import Data.List.NonEmpty (NonEmpty, fromList, head, toList)
 import Data.Maybe (isJust)
 import System.IO (hFlush, stdout)
+import Text.Read (readMaybe)
 import Prelude hiding (head)
 
 main :: IO ()
@@ -83,10 +84,8 @@ askMove b p = do
     p' = other p
 
     parse :: String -> Maybe Pos
-    parse m = case map read $ words m of
-      [] -> Nothing
-      [_] -> Nothing
-      [x, y] -> Just $ Pos x y
+    parse m = case map readMaybe $ words m of
+      [Just x, Just y] -> Just $ Pos x y
       _ -> Nothing
 
     occupied :: Pos -> Bool
@@ -100,12 +99,15 @@ askMove b p = do
 
     handleMove :: Pos -> IO ()
     handleMove m =
-      if occupied m
-        then do
-          putStrLn $ "Sorry, " ++ show m ++ " is already occupied."
-          askMove b p
-        else do
-          askMove (set b $ Cell p m) p'
+      if
+        | occupied m -> do
+            putStrLn $ "Sorry, " ++ show m ++ " is already occupied."
+            askMove b p
+        | not $ inBounds (size b) m -> do
+            putStrLn $ "Sorry, " ++ show m ++ " is out of bounds."
+            askMove b p
+        | otherwise -> do
+            askMove (set b $ Cell p m) p'
 
 ckWin :: Board -> Player -> Bool
 ckWin b p
